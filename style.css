@@ -1,0 +1,15 @@
+/* ================================================================
+   Memristor 3D Schematic — style.css v2.0
+   Theme-aware via CSS custom properties + [data-theme] attribute
+   ================================================================ */
+
+/* ── Reset ────────────────────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ================================================================
+   THEME TOKENS — each [data-theme] block overrides the defaults
+   ================================================================ */
+
+/* DEFAULT: Dark Blue / Neon */
+:root,
+[~data-theme="dark-neon"] 
