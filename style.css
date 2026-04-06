@@ -12,4 +12,925 @@
 
 /* DEFAULT: Dark Blue / Neon */
 :root,
-[~data-theme="dark-neon"] 
+[data-theme="dark-neon"] {
+  --bg:             #07090f;
+  --bg-glass:       rgba(8, 14, 30, 0.86);
+  --bg-glass-2:     rgba(10, 17, 38, 0.94);
+  --border:         rgba(99, 102, 241, 0.26);
+  --border-hi:      rgba(99, 102, 241, 0.52);
+  --accent:         #818cf8;
+  --accent-dim:     rgba(99, 102, 241, 0.18);
+  --text-hi:        #e8eeff;
+  --text-mid:       rgba(180, 192, 235, 0.70);
+  --text-lo:        rgba(130, 148, 195, 0.48);
+  --label-bg:       rgba(7, 12, 30, 0.93);
+  --label-border:   rgba(99, 102, 241, 0.42);
+  --label-color:    #c7d2fe;
+  --connector:      rgba(120, 140, 255, 0.60);
+  --btn-bg:         rgba(22, 32, 65, 0.80);
+  --btn-hover:      rgba(38, 52, 110, 0.92);
+  --tooltip-bg:     rgba(6, 11, 28, 0.98);
+  --shadow:         0 10px 36px rgba(0, 0, 0, 0.62);
+  --shadow-sm:      0 2px 12px rgba(0, 0, 0, 0.45);
+  --glow:           0 0 22px rgba(99, 102, 241, 0.32);
+}
+
+[data-theme="pure-black"] {
+  --bg:             #000000;
+  --bg-glass:       rgba(12, 12, 12, 0.90);
+  --bg-glass-2:     rgba(18, 18, 18, 0.96);
+  --border:         rgba(52, 211, 153, 0.24);
+  --border-hi:      rgba(52, 211, 153, 0.52);
+  --accent:         #34d399;
+  --accent-dim:     rgba(52, 211, 153, 0.14);
+  --text-hi:        #ecfdf5;
+  --text-mid:       rgba(160, 220, 190, 0.68);
+  --text-lo:        rgba(100, 170, 140, 0.46);
+  --label-bg:       rgba(8, 8, 8, 0.96);
+  --label-border:   rgba(52, 211, 153, 0.40);
+  --label-color:    #6ee7b7;
+  --connector:      rgba(52, 211, 153, 0.55);
+  --btn-bg:         rgba(18, 24, 20, 0.86);
+  --btn-hover:      rgba(32, 44, 36, 0.94);
+  --tooltip-bg:     rgba(4, 4, 4, 0.99);
+  --shadow:         0 10px 36px rgba(0, 0, 0, 0.88);
+  --shadow-sm:      0 2px 12px rgba(0, 0, 0, 0.72);
+  --glow:           0 0 20px rgba(52, 211, 153, 0.28);
+}
+
+[data-theme="gradient"] {
+  --bg:             transparent;
+  --bg-glass:       rgba(14, 10, 44, 0.84);
+  --bg-glass-2:     rgba(18, 12, 56, 0.94);
+  --border:         rgba(167, 139, 250, 0.28);
+  --border-hi:      rgba(167, 139, 250, 0.58);
+  --accent:         #a78bfa;
+  --accent-dim:     rgba(167, 139, 250, 0.16);
+  --text-hi:        #ede9fe;
+  --text-mid:       rgba(200, 188, 248, 0.68);
+  --text-lo:        rgba(148, 136, 200, 0.46);
+  --label-bg:       rgba(10, 6, 38, 0.94);
+  --label-border:   rgba(167, 139, 250, 0.44);
+  --label-color:    #ddd6fe;
+  --connector:      rgba(167, 139, 250, 0.60);
+  --btn-bg:         rgba(28, 18, 72, 0.82);
+  --btn-hover:      rgba(46, 30, 110, 0.92);
+  --tooltip-bg:     rgba(7, 4, 28, 0.98);
+  --shadow:         0 10px 36px rgba(0, 0, 0, 0.68);
+  --shadow-sm:      0 2px 12px rgba(0, 0, 0, 0.50);
+  --glow:           0 0 24px rgba(167, 139, 250, 0.38);
+}
+
+[data-theme="light-gray"] {
+  --bg:             #eaecf0;
+  --bg-glass:       rgba(238, 241, 248, 0.90);
+  --bg-glass-2:     rgba(246, 248, 254, 0.96);
+  --border:         rgba(80, 110, 185, 0.20);
+  --border-hi:      rgba(80, 110, 185, 0.45);
+  --accent:         #3b82f6;
+  --accent-dim:     rgba(59, 130, 246, 0.12);
+  --text-hi:        #1a2540;
+  --text-mid:       rgba(48, 72, 130, 0.72);
+  --text-lo:        rgba(90, 115, 165, 0.55);
+  --label-bg:       rgba(232, 237, 252, 0.96);
+  --label-border:   rgba(59, 130, 246, 0.38);
+  --label-color:    #1d4ed8;
+  --connector:      rgba(59, 130, 246, 0.52);
+  --btn-bg:         rgba(215, 222, 242, 0.88);
+  --btn-hover:      rgba(198, 208, 238, 0.98);
+  --tooltip-bg:     rgba(238, 242, 255, 0.99);
+  --shadow:         0 6px 24px rgba(50, 70, 160, 0.14);
+  --shadow-sm:      0 2px 8px rgba(50, 70, 160, 0.09);
+  --glow:           0 0 16px rgba(59, 130, 246, 0.18);
+}
+
+[data-theme="white"] {
+  --bg:             #ffffff;
+  --bg-glass:       rgba(255, 255, 255, 0.92);
+  --bg-glass-2:     rgba(255, 255, 255, 0.98);
+  --border:         rgba(40, 70, 165, 0.16);
+  --border-hi:      rgba(40, 70, 165, 0.36);
+  --accent:         #2563eb;
+  --accent-dim:     rgba(37, 99, 235, 0.09);
+  --text-hi:        #0f172a;
+  --text-mid:       rgba(28, 48, 100, 0.68);
+  --text-lo:        rgba(75, 95, 145, 0.50);
+  --label-bg:       rgba(255, 255, 255, 0.98);
+  --label-border:   rgba(37, 99, 235, 0.34);
+  --label-color:    #1d4ed8;
+  --connector:      rgba(37, 99, 235, 0.48);
+  --btn-bg:         rgba(238, 242, 255, 0.92);
+  --btn-hover:      rgba(222, 229, 255, 0.99);
+  --tooltip-bg:     rgba(255, 255, 255, 1.0);
+  --shadow:         0 6px 24px rgba(20, 40, 120, 0.11);
+  --shadow-sm:      0 2px 8px rgba(20, 40, 120, 0.07);
+  --glow:           0 0 16px rgba(37, 99, 235, 0.16);
+}
+
+/* ================================================================
+   BODY & CANVAS
+   ================================================================ */
+html {
+  height: 100%;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text-hi);
+  background: var(--bg);
+  transition: background 0.35s ease;
+}
+
+/* Gradient theme: applied on html element so it shows behind transparent canvas */
+[data-theme="gradient"] {
+  background: radial-gradient(ellipse at 55% 38%, #1e1468 0%, #0e0930 55%, #040516 100%);
+}
+
+#canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+}
+
+/* ================================================================
+   TOP TOOLBAR
+   ================================================================ */
+#toolbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border);
+  z-index: 30;
+  box-shadow: var(--shadow-sm);
+  gap: 12px;
+}
+
+#title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.title-main {
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  color: var(--text-hi);
+  text-shadow: var(--glow);
+}
+
+.title-sub {
+  font-size: 10px;
+  color: var(--text-mid);
+  letter-spacing: 0.5px;
+  transition: opacity 0.3s;
+}
+
+body.ppt-mode .title-sub {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* ── Toolbar Buttons ──────────────────────────────────────────── */
+.tb-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: var(--btn-bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-hi);
+  font-size: 11.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, color 0.15s;
+  letter-spacing: 0.25px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.tb-btn:hover {
+  background: var(--btn-hover);
+  border-color: var(--border-hi);
+  box-shadow: var(--glow);
+}
+
+.tb-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-btn svg { flex-shrink: 0; opacity: 0.78; }
+
+/* ── Dropdown ─────────────────────────────────────────────────── */
+.dropdown { position: relative; }
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  min-width: 208px;
+  background: var(--bg-glass-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 5px;
+  box-shadow: var(--shadow);
+  z-index: 100;
+  display: none;
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.dropdown-menu.open { display: block; }
+
+.theme-item,
+.dl-item {
+  display: block;
+  width: 100%;
+  padding: 7px 11px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-mid);
+  font-size: 11.5px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+  letter-spacing: 0.15px;
+}
+
+.theme-item:hover,
+.dl-item:hover {
+  background: var(--accent-dim);
+  color: var(--text-hi);
+}
+
+.theme-item.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 600;
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 8px;
+}
+
+/* ── Layer Color / Thickness / Delete Panel ───────────────────── */
+.dropdown-colors {
+  min-width: 310px;
+  padding: 6px;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: default;
+  transition: background 0.13s;
+}
+
+.color-row:hover { background: var(--accent-dim); }
+
+.color-indicator {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 0 5px currentColor;
+}
+
+.color-name {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--text-hi);
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Thickness control ────────────────────────────────────────── */
+.thickness-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.thick-label {
+  font-size: 9.5px;
+  color: var(--text-lo);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+input[type="number"].thickness-input {
+  width: 48px;
+  height: 22px;
+  padding: 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--btn-bg);
+  color: var(--text-hi);
+  font-size: 10.5px;
+  font-family: inherit;
+  text-align: center;
+  cursor: text;
+  /* remove spinner arrows on Firefox */
+  -moz-appearance: textfield;
+  appearance: textfield;
+  transition: border-color 0.13s;
+}
+
+input[type="number"].thickness-input::-webkit-inner-spin-button,
+input[type="number"].thickness-input::-webkit-outer-spin-button {
+  opacity: 0.4;
+  height: 18px;
+}
+
+input[type="number"].thickness-input:hover,
+input[type="number"].thickness-input:focus {
+  border-color: var(--border-hi);
+  outline: none;
+  background: var(--btn-hover);
+}
+
+/* ── Color input ─────────────────────────────────────────────── */
+input[type="color"].color-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 22px;
+  padding: 1px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--btn-bg);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.14s;
+}
+
+input[type="color"].color-input:hover { border-color: var(--border-hi); }
+input[type="color"].color-input::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"].color-input::-webkit-color-swatch { border: none; border-radius: 3px; }
+
+/* ── Delete layer button ─────────────────────────────────────── */
+.delete-layer-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 4px;
+  color: rgba(239, 68, 68, 0.60);
+  font-size: 16px;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.13s, border-color 0.13s, color 0.13s;
+}
+
+.delete-layer-btn:hover {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.65);
+  color: #ef4444;
+}
+
+/* ================================================================
+   FABRICATION PANEL — LEFT SIDEBAR
+   ================================================================ */
+#fab-panel {
+  position: fixed;
+  top: 50%;
+  left: 17px;
+  transform: translateY(-50%);
+  z-index: 20;
+  background: var(--bg-glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 15px 13px;
+  width: 220px;
+  box-shadow: var(--shadow);
+  transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.30s ease;
+}
+
+#fab-panel.hidden {
+  transform: translateY(-50%) translateX(-252px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.ppt-mode #fab-panel {
+  transform: translateY(-50%) translateX(-252px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#fab-panel h3 {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  color: var(--accent);
+  margin-bottom: 11px;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.16s, border-color 0.16s;
+  border: 1px solid transparent;
+}
+
+.step:hover {
+  background: var(--accent-dim);
+  border-color: var(--border);
+}
+
+.step.active {
+  background: var(--accent-dim);
+  border-color: var(--border-hi);
+}
+
+.step-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 0 7px currentColor;
+}
+
+.step-text { display: flex; flex-direction: column; gap: 2px; }
+
+.step-text b {
+  font-size: 11.5px;
+  color: var(--text-hi);
+  font-weight: 600;
+  letter-spacing: 0.15px;
+}
+
+.step-text span {
+  font-size: 10px;
+  color: var(--text-lo);
+  letter-spacing: 0.1px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 9px 0;
+}
+
+.legend-hint {
+  font-size: 9.5px;
+  color: var(--text-lo);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ================================================================
+   HOVER TOOLTIP
+   ================================================================ */
+#tooltip {
+  position: fixed;
+  display: none;
+  z-index: 60;
+  background: var(--tooltip-bg);
+  border: 1px solid var(--border-hi);
+  border-radius: 10px;
+  padding: 10px 14px;
+  pointer-events: none;
+  max-width: 235px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.tt-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 5px;
+  letter-spacing: 0.25px;
+}
+
+.tt-desc {
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.55;
+  margin-bottom: 7px;
+}
+
+.tt-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  letter-spacing: 0.35px;
+  font-weight: 600;
+}
+
+/* ================================================================
+   LAYER LABELS (HTML OVERLAY)
+   ================================================================ */
+#labels-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.lbl {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0;
+  /* No CSS transition on position — updated per-frame in JS */
+  transition: opacity 0.28s ease;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+
+/* Left-side labels: reverse layout so dot is nearest the stack */
+.lbl.lbl-left { flex-direction: row-reverse; }
+
+.lbl-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.lbl-box {
+  background: var(--label-bg);
+  border: 1px solid var(--label-border);
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--label-color);
+  letter-spacing: 0.35px;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ================================================================
+   SVG CONNECTOR LINES
+   ================================================================ */
+#label-svg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 14;
+  overflow: visible;
+}
+
+/* ================================================================
+   BOTTOM BAR
+   ================================================================ */
+#bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid var(--border);
+  z-index: 30;
+  gap: 10px;
+}
+
+#preset-views,
+#view-toggles {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bar-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-lo);
+  margin-right: 3px;
+}
+
+.view-btn,
+.toggle-btn {
+  padding: 4px 9px;
+  background: var(--btn-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-mid);
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+  letter-spacing: 0.15px;
+  line-height: 1;
+}
+
+.view-btn:hover,
+.toggle-btn:hover {
+  background: var(--btn-hover);
+  color: var(--text-hi);
+  border-color: var(--border-hi);
+}
+
+.toggle-btn.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--border-hi);
+}
+
+#controls-hint {
+  display: flex;
+  gap: 14px;
+  font-size: 9.5px;
+  color: var(--text-lo);
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+}
+
+body.ppt-mode #controls-hint { display: none; }
+
+/* ================================================================
+   RECORDING INDICATOR
+   ================================================================ */
+#rec-indicator {
+  position: fixed;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(220, 38, 38, 0.92);
+  color: #fff;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.40);
+}
+
+#rec-indicator.active { display: flex; }
+
+#rec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  animation: blink 1s ease infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.1; }
+}
+
+/* ================================================================
+   TOAST NOTIFICATION
+   ================================================================ */
+#toast {
+  position: fixed;
+  bottom: 54px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--bg-glass-2);
+  border: 1px solid var(--border-hi);
+  border-radius: 8px;
+  padding: 7px 18px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-hi);
+  z-index: 80;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ================================================================
+   ADD NEW LAYER — inline form inside Colors panel
+   ================================================================ */
+.add-layer-row {
+  padding: 4px 4px 2px;
+}
+
+.add-layer-toggle-btn {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--accent-dim);
+  border: 1px dashed var(--border-hi);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.2px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.add-layer-toggle-btn:hover {
+  background: var(--btn-hover);
+  border-color: var(--accent);
+}
+
+/* Inline form */
+.add-layer-form {
+  padding: 6px 8px 4px;
+  border-radius: 6px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border);
+  margin: 3px 4px;
+  overflow: hidden;
+  transition: max-height 0.22s ease, opacity 0.18s ease;
+  max-height: 120px;
+  opacity: 1;
+}
+
+.add-layer-form-hidden {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-color: transparent;
+  pointer-events: none;
+}
+
+.add-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.add-name-input,
+.add-full-input {
+  width: 100%;
+  padding: 4px 8px;
+  background: var(--btn-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-hi);
+  font-size: 11px;
+  font-family: inherit;
+  transition: border-color 0.13s;
+}
+
+.add-name-input:focus,
+.add-full-input:focus {
+  border-color: var(--border-hi);
+  outline: none;
+}
+
+.add-name-input::placeholder,
+.add-full-input::placeholder {
+  color: var(--text-lo);
+  font-style: italic;
+}
+
+.add-form-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Shared confirm / cancel buttons */
+.add-confirm-btn,
+.add-cancel-btn {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid;
+  line-height: 1;
+  transition: background 0.13s, border-color 0.13s;
+}
+
+.add-confirm-btn {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  flex: 1;
+}
+
+.add-confirm-btn:hover {
+  background: var(--btn-hover);
+}
+
+.add-cancel-btn {
+  background: none;
+  border-color: var(--border);
+  color: var(--text-lo);
+}
+
+.add-cancel-btn:hover {
+  border-color: var(--border-hi);
+  color: var(--text-mid);
+}
+
+/* ================================================================
+   RESET TO DEFAULTS — bottom of Colors panel
+   ================================================================ */
+.reset-defaults-row {
+  padding: 3px 4px 4px;
+}
+
+.reset-defaults-btn {
+  width: 100%;
+  padding: 5px 10px;
+  background: none;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-radius: 6px;
+  color: rgba(239, 68, 68, 0.60);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.2px;
+  transition: background 0.13s, border-color 0.13s, color 0.13s;
+}
+
+.reset-defaults-btn:hover {
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #ef4444;
+}

@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Memristor 3D Schematic — MoO₃/ZnO Stack</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font loads async — system-ui fallback ensures text always renders correctly -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </noscript>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -119,6 +124,7 @@
       <button class="toggle-btn active" id="autorotate-toggle">Auto-rotate: ON</button>
       <button class="toggle-btn active" id="labels-toggle">Labels: ON</button>
       <button class="toggle-btn active" id="grid-toggle">Grid: ON</button>
+      <button class="toggle-btn active" id="shadow-toggle">Shadow: ON</button>
       <button class="toggle-btn" id="sidebar-toggle">Hide Panel</button>
       <button class="toggle-btn" id="reset-btn">Reset View</button>
     </div>
@@ -139,8 +145,29 @@
   <!-- ═══ TOAST NOTIFICATION ══════════════════════════════════════ -->
   <div id="toast"></div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Three.js core — primary CDN with fallback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+          onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/build/three.min.js'"></script>
+
+  <!-- OrbitControls — primary CDN with fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
+          onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js'"></script>
+
+  <!-- Guard: show clear message if Three.js still failed to load -->
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.body.innerHTML =
+        '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+        'height:100vh;gap:16px;font-family:Segoe UI,system-ui,sans-serif;background:#07090f;' +
+        'color:#aab4cc;text-align:center;padding:24px">' +
+        '<div style="font-size:38px">📡</div>' +
+        '<div style="font-size:20px;font-weight:700;color:#e8eeff">Could not load Three.js</div>' +
+        '<div style="font-size:13px;opacity:0.65;max-width:400px;line-height:1.7">' +
+        'The 3D library failed to load from both CDN sources.<br>' +
+        'Please check your internet connection and reload the page.</div></div>';
+    }
+  </script>
+
   <script src="script.js"></script>
 </body>
 </html>
