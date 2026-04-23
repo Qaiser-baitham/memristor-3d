@@ -31,7 +31,7 @@ The visualization is designed for researchers, engineers, and students working i
 ## Device Structure
 
 ```
-┌────────────────────────────────┐
+┌─────────────────────────────────┐
 │         Top Electrode (Au/Pt)   │
 ├─────────────────────────────────┤
 │         MoO₃  (Switching Layer) │
@@ -55,7 +55,7 @@ git clone https://github.com/Qaiser-baitham/memristor-3d.git
 cd memristor-3d
 ```
 
-Then simply open `index.html` in any modern browser — for no build step or server required.
+Then simply open `index.html` in any modern browser — no build step or server required.
 
 ### Live Demo
 
@@ -68,7 +68,7 @@ Then simply open `index.html` in any modern browser — for no build step or ser
 ```
 memristor-3d/
 ├── index.html      # Main HTML entry point & UI layout
-├── script.js        # Three.js 3D scene, geometry, controls & interactions
+├── script.js       # Three.js 3D scene, geometry, controls & interactions
 ├── style.css       # Styling, themes, toolbar & responsive layout
 └── README.md       # Project documentation
 ```

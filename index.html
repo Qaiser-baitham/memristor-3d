@@ -18,8 +18,8 @@
   <!-- ═══ TOP TOOLBAR ═══════════════════════════════════════════ -->
   <header id="toolbar">
     <div id="title-block">
-      <div class="title-main">Memristor Device</div>
-      <div class="title-sub">MoO₃ / ZnO Resistive Switching Stack</div>
+      <div class="title-main" data-edit="title-main" title="Double-click to rename">Memristor Device</div>
+      <div class="title-sub"  data-edit="title-sub"  title="Double-click to edit">MoO₃ / ZnO Resistive Switching Stack</div>
     </div>
 
     <nav id="toolbar-right">
@@ -64,7 +64,7 @@
         </div>
       </div>
 
-      <!-- Layer Colors dropdown -->
+      <!-- Layer Colors dropdown (color pickers only) -->
       <div class="dropdown" id="colors-dropdown">
         <button class="tb-btn" id="colors-btn" aria-haspopup="true" aria-expanded="false">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,6 +75,20 @@
           Colors
         </button>
         <div class="dropdown-menu dropdown-colors" id="colors-menu" role="menu">
+          <!-- built by JS -->
+        </div>
+      </div>
+
+      <!-- Layer Controls dropdown (thickness/size/add/remove/reset) -->
+      <div class="dropdown" id="controls-dropdown">
+        <button class="tb-btn" id="controls-btn" aria-haspopup="true" aria-expanded="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Controls
+        </button>
+        <div class="dropdown-menu dropdown-controls" id="controls-menu" role="menu">
           <!-- built by JS -->
         </div>
       </div>
@@ -92,10 +106,10 @@
 
   <!-- ═══ FABRICATION PANEL (LEFT) ═══════════════════════════════ -->
   <aside id="fab-panel">
-    <h3>Fabrication Process</h3>
+    <h3 data-edit="fab-header" title="Double-click to rename">Fabrication Process</h3>
     <div class="steps" id="fab-steps"><!-- filled by JS --></div>
     <div class="divider"></div>
-    <p class="legend-hint">Click a step to highlight &middot; Hover layers for details</p>
+    <p class="legend-hint" data-edit="fab-hint" title="Double-click to edit">Click a step to highlight &middot; Hover layers for details</p>
   </aside>
 
   <!-- ═══ 3D CANVAS ═══════════════════════════════════════════════ -->
@@ -125,6 +139,7 @@
       <button class="toggle-btn active" id="labels-toggle">Labels: ON</button>
       <button class="toggle-btn active" id="grid-toggle">Grid: ON</button>
       <button class="toggle-btn active" id="shadow-toggle">Shadow: ON</button>
+      <button class="toggle-btn" id="edit-mode-toggle" title="Click any electrode in 3D view to remove it">Edit: OFF</button>
       <button class="toggle-btn" id="sidebar-toggle">Hide Panel</button>
       <button class="toggle-btn" id="reset-btn">Reset View</button>
     </div>

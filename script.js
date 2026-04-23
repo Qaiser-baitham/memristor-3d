@@ -8,10 +8,29 @@
 'use strict';
 
 /* ──────────────────────────────────────────────────────────────
-   STACK GEOMETRY CONSTANTS
+   STACK GEOMETRY — DYNAMIC
+   The substrate footprint expands/shrinks with the electrode
+   array dimensions so the device is always sized for its array.
+   Per-step spacing (1.10 X, 1.133 Z) and edge margin (0.7 X,
+   0.6 Z each side) are tuned to match the original 5×4 default
+   exactly: (5-1)*1.10 + 1.4 = 5.8, (4-1)*1.133 + 1.2 = 4.6.
 ────────────────────────────────────────────────────────────── */
-const STACK_W = 5.8;   // stack width  (X)
-const STACK_D = 4.6;   // stack depth  (Z)
+const STEP_X = 1.10;       // per-column spacing
+const STEP_Z = 3.4 / 3;    // per-row spacing — exact, matches default 4.6 at rows=4
+const PAD_X  = 1.4;    // total X edge padding (sum of both sides)
+const PAD_Z  = 1.2;    // total Z edge padding (sum of both sides)
+const MIN_W  = 2.5;    // minimum substrate width
+const MIN_D  = 2.0;    // minimum substrate depth
+
+let STACK_W = 5.8;     // computed in recomputeStackDimensions()
+let STACK_D = 4.6;     // computed in recomputeStackDimensions()
+
+function recomputeStackDimensions() {
+  const COLS = Math.max(1, Math.floor(topElecConfig.cols));
+  const ROWS = Math.max(1, Math.floor(topElecConfig.rows));
+  STACK_W = Math.max(MIN_W, (COLS - 1) * STEP_X + PAD_X);
+  STACK_D = Math.max(MIN_D, (ROWS - 1) * STEP_Z + PAD_Z);
+}
 
 /* ──────────────────────────────────────────────────────────────
    MUTABLE LAYER DEFINITIONS — bottom to top
@@ -65,13 +84,40 @@ const LAYER_DEFS = [
 /* ── Top electrode config (separate from LAYER_DEFS) ─────────── */
 const topElecConfig = {
   visible: true,
-  accent:  '#C8D5E5',
-  color:   0xd8e0ea,
+  // Default = neutral dark gray (industrial Pt look, no harsh shine)
+  accent:  '#0f1014',
+  color:   0x0f1014,
+  cols:    5,
+  rows:    4,
+  // Set of "row,col" strings — individual electrodes hidden by user
+  removed: new Set(),
+  // Custom display name (editable by user)
+  name:    'Pt (Top)',
+  fullName:'Pt — Top Electrodes',
+  process: 'DC Sputtered · grid array',
 };
+
+/* ── Editable UI text labels (panel headings, hints) ─────────── */
+const UI_TEXT = {
+  fabHeader:  'Fabrication Process',
+  fabHint:    'Click a step to highlight · Hover layers for details',
+  titleMain:  'Memristor Device',
+  titleSub:   'MoO₃ / ZnO Resistive Switching Stack',
+};
+const UI_TEXT_DEFAULT = { ...UI_TEXT };
 
 /* ── Snapshot of factory defaults — used by Reset to Defaults ── */
 const LAYER_DEFS_DEFAULT     = LAYER_DEFS.map(l => ({ ...l }));
-const TOP_ELEC_DEFAULT       = { ...topElecConfig };
+const TOP_ELEC_DEFAULT       = {
+  visible: true,
+  accent:  '#0f1014',
+  color:   0x0f1014,
+  cols:    5,
+  rows:    4,
+  name:    'Pt (Top)',
+  fullName:'Pt — Top Electrodes',
+  process: 'DC Sputtered · grid array',
+};
 
 /* ──────────────────────────────────────────────────────────────
    THEME DEFINITIONS
@@ -173,7 +219,8 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
   alpha: true,
 });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Cap at 2.5 to gain extra crispness on hi-DPI screens without tanking FPS
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -212,11 +259,14 @@ scene.add(ambientLight);
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
 keyLight.position.set(8, 14, 8);
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.mapSize.set(4096, 4096);   // 4× sharper shadow map → smoother edges
 keyLight.shadow.camera.near   = 0.5;
 keyLight.shadow.camera.far    = 40;
 keyLight.shadow.camera.left   = keyLight.shadow.camera.bottom = -10;
 keyLight.shadow.camera.right  = keyLight.shadow.camera.top   = 10;
+keyLight.shadow.bias          = -0.0008;   // kills shadow acne on flush surfaces
+keyLight.shadow.normalBias    = 0.04;
+keyLight.shadow.radius        = 4;          // soft penumbra
 scene.add(keyLight);
 
 const fillLight = new THREE.DirectionalLight(0x4488ff, 0.5);
@@ -232,18 +282,32 @@ bounceLight.position.set(0, -2, 0);
 scene.add(bounceLight);
 
 /* ──────────────────────────────────────────────────────────────
-   GLOW PLANE — optional shadow/glow under the stack
+   GLOW PLANE — optional shadow/glow under the stack.
+   Geometry is rebuilt whenever the stack footprint changes so the
+   glow always extends slightly beyond the device.
 ────────────────────────────────────────────────────────────── */
-const glowGeo  = new THREE.PlaneGeometry(STACK_W + 2, STACK_D + 2);
-const glowMat  = new THREE.MeshBasicMaterial({
+let glowGeo   = new THREE.PlaneGeometry(STACK_W + 2, STACK_D + 2);
+const glowMat = new THREE.MeshBasicMaterial({
   color: 0x3b4fd4, transparent: true, opacity: 0.07,
 });
-const glowPlane = new THREE.Mesh(glowGeo, glowMat);
+let glowPlane = new THREE.Mesh(glowGeo, glowMat);
 glowPlane.rotation.x = -Math.PI / 2;
 glowPlane.position.y = 0.005;
 scene.add(glowPlane);
 
 let glowVisible = true;   // user-controlled
+
+/** Rebuild the glow plane geometry to match current STACK_W/STACK_D */
+function rebuildGlowPlane() {
+  scene.remove(glowPlane);
+  glowGeo.dispose();
+  glowGeo = new THREE.PlaneGeometry(STACK_W + 2, STACK_D + 2);
+  glowPlane = new THREE.Mesh(glowGeo, glowMat);
+  glowPlane.rotation.x = -Math.PI / 2;
+  glowPlane.position.y = 0.005;
+  glowPlane.visible = glowVisible;
+  scene.add(glowPlane);
+}
 
 /* ──────────────────────────────────────────────────────────────
    FLOOR GRID
@@ -261,46 +325,97 @@ function buildGrid(c1, c2) {
 /* ──────────────────────────────────────────────────────────────
    TOP ELECTRODE GEOMETRY (shared, reused)
    cylRadius and cylHeight are mutable — user-controlled via UI
+
+   NOTE: metalness reduced from 0.97 → 0.55 and roughness raised
+   from 0.09 → 0.45 so user-chosen colors (gold, red, blue, etc.)
+   show vividly instead of being washed out by mirror reflections.
 ────────────────────────────────────────────────────────────── */
 let cylRadius = 0.22;
 let cylHeight  = 0.30;
-let cylGeo = new THREE.CylinderGeometry(cylRadius, cylRadius, cylHeight, 40);
+// 96 radial segments → silky smooth circular silhouette (no visible facets)
+const CYL_RADIAL_SEGMENTS = 96;
+let cylGeo = new THREE.CylinderGeometry(cylRadius, cylRadius, cylHeight, CYL_RADIAL_SEGMENTS);
 
 /** Rebuild cylinder geometry with current radius/height and refresh all meshes */
 function rebuildCylGeo() {
   cylGeo.dispose();
-  cylGeo = new THREE.CylinderGeometry(cylRadius, cylRadius, cylHeight, 40);
+  cylGeo = new THREE.CylinderGeometry(cylRadius, cylRadius, cylHeight, CYL_RADIAL_SEGMENTS);
   topGroup.children.forEach(mesh => { mesh.geometry = cylGeo; });
 }
+// Matte-metallic Pt look. Low metalness + high roughness ensures
+// the chosen color is never lost to reflections/highlights.
 const cylMat = new THREE.MeshStandardMaterial({
   color:     topElecConfig.color,
-  metalness: 0.97,
-  roughness: 0.09,
+  metalness: 0.32,
+  roughness: 0.62,
+  envMapIntensity: 0.25,
 });
-// Add subtle emissive so color changes are visible for metallic material
-_applyMetallicEmissive(cylMat, topElecConfig.color);
+// Strong emissive so chosen color is always vivid & not washed out
+_applyVisibleColor(cylMat, topElecConfig.color);
 
 const topGroup = new THREE.Group();
 scene.add(topGroup);
 
-/** Build the 5×4 cylinder grid inside topGroup */
+/** Build the cylinder grid inside topGroup, honoring rows/cols/removed.
+ *
+ *  AUTO-REDISTRIBUTE behaviour: when the user removes individual
+ *  electrodes, the remaining ones spread out to fill the available
+ *  space — no holes, no off-centre arrangements.
+ *    • Per row: visible cells distribute evenly across the X span.
+ *    • Empty rows are dropped, the rest distribute across the Z span.
+ *    • Single-row / single-col cases are auto-centred.
+ *
+ *  Shadows are disabled on the cylinders themselves to keep the
+ *  visualisation crisp and free of cast-shadow noise.
+ */
 function buildTopElectrodes() {
   while (topGroup.children.length) topGroup.remove(topGroup.children[0]);
   if (!topElecConfig.visible) return;
 
-  const COLS = 5, ROWS = 4;
+  const COLS = Math.max(1, Math.floor(topElecConfig.cols));
+  const ROWS = Math.max(1, Math.floor(topElecConfig.rows));
+
+  // ── Step 1: collect per-row visible column lists ───────────────
+  const rowVisCols = [];
+  for (let r = 0; r < ROWS; r++) {
+    const cols = [];
+    for (let c = 0; c < COLS; c++) {
+      if (!topElecConfig.removed.has(`${r},${c}`)) cols.push(c);
+    }
+    rowVisCols.push(cols);
+  }
+
+  // ── Step 2: keep only rows that still have visible electrodes ──
+  const visibleRowIndices = [];
+  rowVisCols.forEach((cs, r) => { if (cs.length > 0) visibleRowIndices.push(r); });
+  if (visibleRowIndices.length === 0) return;
+
   const xSpan = STACK_W - 1.4;
   const zSpan = STACK_D - 1.2;
-  const xStep = xSpan / (COLS - 1);
-  const zStep = zSpan / (ROWS - 1);
+  const VR    = visibleRowIndices.length;
 
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  // ── Step 3: redistribute Z across visible rows, X across visible cols ──
+  visibleRowIndices.forEach((r, rIdx) => {
+    const cols = rowVisCols[r];
+    const VC   = cols.length;
+
+    // Z position: centre single row, evenly distribute multiple rows
+    const z = (VR === 1) ? 0
+            : (-zSpan / 2 + (zSpan / (VR - 1)) * rIdx);
+
+    cols.forEach((c, cIdx) => {
+      // X position: centre single column, evenly distribute multiple
+      const x = (VC === 1) ? 0
+              : (-xSpan / 2 + (xSpan / (VC - 1)) * cIdx);
+
       const cyl = new THREE.Mesh(cylGeo, cylMat);
-      cyl.position.set(-xSpan / 2 + c * xStep, cylHeight / 2, -zSpan / 2 + r * zStep);
+      cyl.position.set(x, cylHeight / 2, z);
+      cyl.castShadow    = false;   // electrodes don't cast shadows
+      cyl.receiveShadow = false;
+      cyl.userData = { isTopElectrode: true, row: r, col: c, key: `${r},${c}` };
       topGroup.add(cyl);
-    }
-  }
+    });
+  });
 }
 
 buildTopElectrodes();
@@ -338,12 +453,12 @@ function buildStack() {
       color:           lyr.color,
       metalness:       lyr.metalness,
       roughness:       lyr.roughness,
-      envMapIntensity: 0.6,
+      envMapIntensity: 0.4,
     });
 
-    // FIX: For metallic layers (Pt, Ti) a subtle emissive ensures the
-    // chosen color is always visible regardless of environment-map state.
-    _applyMetallicEmissive(mat, lyr.color);
+    // Apply vivid color (tiered emissive) so the chosen color is
+    // always perceptible — even on highly metallic Pt/Ti.
+    _applyVisibleColor(mat, lyr.color);
 
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(0, yAccum + lyr.height / 2, 0);
@@ -363,7 +478,9 @@ function buildStack() {
     el.className = 'lbl';
     el.innerHTML =
       `<div class="lbl-dot" style="background:${lyr.accent}"></div>` +
-      `<div class="lbl-box" style="border-color:${lyr.accent}55;color:${lyr.accent}">${lyr.name}</div>`;
+      `<div class="lbl-box" data-edit="layer-name" data-layer-index="${i}" ` +
+        `title="Double-click to rename" ` +
+        `style="border-color:${lyr.accent}55;color:${lyr.accent}">${lyr.name}</div>`;
     labelsContainer.appendChild(el);
     labelData.push({ el, rightPos, leftPos, mesh, index: i });
 
@@ -376,13 +493,15 @@ function buildStack() {
 
   // ── Top electrode label ───────────────────────────────────────
   if (topElecConfig.visible) {
-    const topMidY = yAccum + 0.15;
+    const topMidY = yAccum + cylHeight * 0.5;
     const OFFSET  = STACK_W / 2 + 0.55;
     const el      = document.createElement('div');
     el.className  = 'lbl';
     el.innerHTML  =
       `<div class="lbl-dot" style="background:${topElecConfig.accent}"></div>` +
-      `<div class="lbl-box" style="border-color:${topElecConfig.accent}55;color:${topElecConfig.accent}">Pt (Top)</div>`;
+      `<div class="lbl-box" data-edit="top-electrode-name" ` +
+        `title="Double-click to rename" ` +
+        `style="border-color:${topElecConfig.accent}55;color:${topElecConfig.accent}">${topElecConfig.name}</div>`;
     labelsContainer.appendChild(el);
     labelData.push({
       el,
@@ -396,19 +515,41 @@ function buildStack() {
   // ── Refresh side panels ───────────────────────────────────────
   buildFabPanel();
   buildColorMenu();
+  buildControlsMenu();
 }
 
 /* ──────────────────────────────────────────────────────────────
-   HELPER: apply a faint emissive to metallic materials so the
-   user's chosen color is always perceptible in the viewport.
+   HELPER: apply a proportional emissive so the user-chosen color
+   is always vivid and perceptible in the viewport — even on
+   metallic surfaces (Pt, Ti) that would otherwise be dominated
+   by environment reflections.
+
+   Tiered by metalness:
+   - very metallic (≥0.65)  → strong tint (38%) so gold/red/blue read clearly
+   - moderately metallic    → mid tint (20%)
+   - dielectric             → faint tint (8%) keeps surface look natural
 ────────────────────────────────────────────────────────────── */
+function _applyVisibleColor(mat, hexColor) {
+  // Always update the base color too — single source of truth
+  mat.color.setHex(hexColor);
+
+  const r = ((hexColor >> 16) & 0xff) / 255;
+  const g = ((hexColor >> 8)  & 0xff) / 255;
+  const b = (hexColor         & 0xff) / 255;
+
+  let k;
+  if      (mat.metalness >= 0.65) k = 0.38;
+  else if (mat.metalness >= 0.30) k = 0.20;
+  else                            k = 0.08;
+
+  mat.emissive.setRGB(r * k, g * k, b * k);
+  mat.emissiveIntensity = 1.0;
+  mat.needsUpdate = true;
+}
+
+/* Backwards-compatible alias — older code paths may still call it */
 function _applyMetallicEmissive(mat, hexColor) {
-  if (mat.metalness > 0.65) {
-    const r = ((hexColor >> 16) & 0xff) / 255;
-    const g = ((hexColor >> 8)  & 0xff) / 255;
-    const b = (hexColor         & 0xff) / 255;
-    mat.emissive.setRGB(r * 0.10, g * 0.10, b * 0.10);
-  }
+  _applyVisibleColor(mat, hexColor);
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -425,8 +566,15 @@ function buildFabPanel() {
     step.dataset.index = i;
     step.innerHTML   =
       `<div class="step-dot" style="background:${lyr.accent};color:${lyr.accent}"></div>` +
-      `<div class="step-text"><b>${lyr.full}</b><span>${lyr.process}</span></div>`;
-    step.addEventListener('click', () => pulseLayer(i));
+      `<div class="step-text">` +
+        `<b data-edit="layer-full" data-layer-index="${i}" title="Double-click to rename">${lyr.full}</b>` +
+        `<span data-edit="layer-process" data-layer-index="${i}" title="Double-click to edit">${lyr.process}</span>` +
+      `</div>`;
+    step.addEventListener('click', e => {
+      // Don't pulse when editing text
+      if (e.target.isContentEditable) return;
+      pulseLayer(i);
+    });
     fabStepsEl.appendChild(step);
   });
 
@@ -436,35 +584,133 @@ function buildFabPanel() {
     stepTop.dataset.index = LAYER_DEFS.length;
     stepTop.innerHTML =
       `<div class="step-dot" style="background:${topElecConfig.accent};color:${topElecConfig.accent}"></div>` +
-      `<div class="step-text"><b>Pt — Top Electrodes</b><span>DC Sputtered · 5×4 grid array</span></div>`;
+      `<div class="step-text">` +
+        `<b data-edit="top-full" title="Double-click to rename">${topElecConfig.fullName}</b>` +
+        `<span data-edit="top-process" title="Double-click to edit">${topElecConfig.process} · ${topElecConfig.cols}×${topElecConfig.rows}</span>` +
+      `</div>`;
     fabStepsEl.appendChild(stepTop);
   }
 }
 
 /* ──────────────────────────────────────────────────────────────
-   COLOR / THICKNESS / DELETE MENU
+   COLORS MENU — only color pickers (one per layer + top elec)
+   Thickness, sizes, add, remove, reset all live in Controls menu.
 ────────────────────────────────────────────────────────────── */
-const colorsMenu = document.getElementById('colors-menu');
+const colorsMenu   = document.getElementById('colors-menu');
+const controlsMenu = document.getElementById('controls-menu');
 
 function buildColorMenu() {
   colorsMenu.innerHTML = '';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'menu-header';
+  header.textContent = 'LAYER COLORS';
+  colorsMenu.appendChild(header);
 
   // ── Standard layers ───────────────────────────────────────────
   LAYER_DEFS.forEach((lyr, i) => {
     const row = document.createElement('div');
     row.className = 'color-row';
 
-    // Indicator dot
     const dot = document.createElement('div');
     dot.className = 'color-indicator';
     dot.style.background = lyr.accent;
 
-    // Layer name
     const nameEl = document.createElement('span');
     nameEl.className = 'color-name';
     nameEl.textContent = lyr.name;
+    nameEl.title = 'Double-click to rename';
+    nameEl.dataset.edit = 'layer-name';
+    nameEl.dataset.layerIndex = String(i);
 
-    // Thickness control
+    const colorInput = document.createElement('input');
+    colorInput.type      = 'color';
+    colorInput.className = 'color-input';
+    colorInput.value     = lyr.accent;
+    colorInput.title     = `Change ${lyr.name} color`;
+    colorInput.addEventListener('click',     e => e.stopPropagation());
+    colorInput.addEventListener('mousedown', e => e.stopPropagation());
+    colorInput.addEventListener('input', e => {
+      const hex = e.target.value;
+      updateLayerColor(i, hex);
+      dot.style.background = hex;
+    });
+
+    row.appendChild(dot);
+    row.appendChild(nameEl);
+    row.appendChild(colorInput);
+    colorsMenu.appendChild(row);
+  });
+
+  // ── Top electrodes color ─────────────────────────────────────
+  if (topElecConfig.visible) {
+    const divider = document.createElement('div');
+    divider.className = 'menu-divider';
+    colorsMenu.appendChild(divider);
+
+    const row = document.createElement('div');
+    row.className = 'color-row';
+
+    const dot = document.createElement('div');
+    dot.className = 'color-indicator';
+    dot.style.background = topElecConfig.accent;
+
+    const nameEl = document.createElement('span');
+    nameEl.className   = 'color-name';
+    nameEl.textContent = topElecConfig.name;
+    nameEl.title       = 'Double-click to rename';
+    nameEl.dataset.edit = 'top-electrode-name';
+
+    const colorInput = document.createElement('input');
+    colorInput.type      = 'color';
+    colorInput.className = 'color-input';
+    colorInput.value     = topElecConfig.accent;
+    colorInput.title     = 'Change top electrode color';
+    colorInput.addEventListener('click',     e => e.stopPropagation());
+    colorInput.addEventListener('mousedown', e => e.stopPropagation());
+    colorInput.addEventListener('input', e => {
+      const hex = e.target.value;
+      updateLayerColor(LAYER_DEFS.length, hex);
+      dot.style.background = hex;
+    });
+
+    row.appendChild(dot);
+    row.appendChild(nameEl);
+    row.appendChild(colorInput);
+    colorsMenu.appendChild(row);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   CONTROLS MENU — thickness, size, electrode grid, add, reset
+────────────────────────────────────────────────────────────── */
+function buildControlsMenu() {
+  controlsMenu.innerHTML = '';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'menu-header';
+  header.textContent = 'LAYER CONTROLS';
+  controlsMenu.appendChild(header);
+
+  // ── Standard layers — thickness + delete ─────────────────────
+  LAYER_DEFS.forEach((lyr, i) => {
+    const row = document.createElement('div');
+    row.className = 'color-row';
+
+    const dot = document.createElement('div');
+    dot.className = 'color-indicator';
+    dot.style.background = lyr.accent;
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'color-name';
+    nameEl.textContent = lyr.name;
+    nameEl.title = 'Double-click to rename';
+    nameEl.dataset.edit = 'layer-name';
+    nameEl.dataset.layerIndex = String(i);
+
+    // Thickness
     const thickCtrl = document.createElement('div');
     thickCtrl.className = 'thickness-ctrl';
     thickCtrl.innerHTML = `<label class="thick-label">h:</label>`;
@@ -476,32 +722,17 @@ function buildColorMenu() {
     thickInput.max       = '3.00';
     thickInput.step      = '0.05';
     thickInput.title     = 'Layer thickness (visual units)';
-    // Prevent dropdown from closing when clicking number input
-    thickInput.addEventListener('click',  e => e.stopPropagation());
+    thickInput.addEventListener('click',     e => e.stopPropagation());
     thickInput.addEventListener('mousedown', e => e.stopPropagation());
     thickInput.addEventListener('change', e => {
       const val = parseFloat(e.target.value);
       if (!isNaN(val) && val >= 0.05) {
         LAYER_DEFS[i].height = Math.min(3.0, Math.max(0.05, val));
         buildStack();
-        showToast(`${lyr.name} thickness → ${LAYER_DEFS[i].height.toFixed(2)}`);
+        showToast(`${LAYER_DEFS[i].name} thickness → ${LAYER_DEFS[i].height.toFixed(2)}`);
       }
     });
     thickCtrl.appendChild(thickInput);
-
-    // Color input
-    const colorInput = document.createElement('input');
-    colorInput.type      = 'color';
-    colorInput.className = 'color-input';
-    colorInput.value     = lyr.accent;
-    colorInput.title     = 'Change layer color';
-    colorInput.addEventListener('click',  e => e.stopPropagation());
-    colorInput.addEventListener('mousedown', e => e.stopPropagation());
-    colorInput.addEventListener('input', e => {
-      const hex = e.target.value;
-      updateLayerColor(i, hex);
-      dot.style.background = hex;
-    });
 
     // Delete button
     const delBtn = document.createElement('button');
@@ -517,25 +748,28 @@ function buildColorMenu() {
       const name = LAYER_DEFS[i].name;
       LAYER_DEFS.splice(i, 1);
       buildStack();
-      closeAllMenus();
       showToast(`Layer "${name}" deleted`);
     });
 
     row.appendChild(dot);
     row.appendChild(nameEl);
     row.appendChild(thickCtrl);
-    row.appendChild(colorInput);
     row.appendChild(delBtn);
-    colorsMenu.appendChild(row);
+    controlsMenu.appendChild(row);
   });
 
-  // ── Divider ───────────────────────────────────────────────────
-  const divider = document.createElement('div');
-  divider.className = 'menu-divider';
-  colorsMenu.appendChild(divider);
+  // ── Top electrodes section ────────────────────────────────────
+  const topDivider = document.createElement('div');
+  topDivider.className = 'menu-divider';
+  controlsMenu.appendChild(topDivider);
 
-  // ── Top electrodes row ────────────────────────────────────────
+  const topHeader = document.createElement('div');
+  topHeader.className = 'menu-subheader';
+  topHeader.textContent = 'TOP ELECTRODES';
+  controlsMenu.appendChild(topHeader);
+
   if (topElecConfig.visible) {
+    // Row 1: name + show/hide whole array
     const row = document.createElement('div');
     row.className = 'color-row';
 
@@ -545,9 +779,11 @@ function buildColorMenu() {
 
     const nameEl = document.createElement('span');
     nameEl.className   = 'color-name';
-    nameEl.textContent = 'Pt (Top)';
+    nameEl.textContent = topElecConfig.name;
+    nameEl.title       = 'Double-click to rename';
+    nameEl.dataset.edit = 'top-electrode-name';
 
-    // Size controls — Radius
+    // Radius
     const radiusCtrl = document.createElement('div');
     radiusCtrl.className = 'thickness-ctrl';
     radiusCtrl.innerHTML = `<label class="thick-label">r:</label>`;
@@ -558,7 +794,7 @@ function buildColorMenu() {
     radiusInput.min       = '0.05';
     radiusInput.max       = '1.00';
     radiusInput.step      = '0.01';
-    radiusInput.title     = 'Electrode radius (visual units)';
+    radiusInput.title     = 'Electrode radius';
     radiusInput.addEventListener('click',     e => e.stopPropagation());
     radiusInput.addEventListener('mousedown', e => e.stopPropagation());
     radiusInput.addEventListener('change', e => {
@@ -571,7 +807,7 @@ function buildColorMenu() {
     });
     radiusCtrl.appendChild(radiusInput);
 
-    // Size controls — Height
+    // Height
     const heightCtrl = document.createElement('div');
     heightCtrl.className = 'thickness-ctrl';
     heightCtrl.innerHTML = `<label class="thick-label">h:</label>`;
@@ -582,7 +818,7 @@ function buildColorMenu() {
     heightInput.min       = '0.05';
     heightInput.max       = '2.00';
     heightInput.step      = '0.05';
-    heightInput.title     = 'Electrode height (visual units)';
+    heightInput.title     = 'Electrode height';
     heightInput.addEventListener('click',     e => e.stopPropagation());
     heightInput.addEventListener('mousedown', e => e.stopPropagation());
     heightInput.addEventListener('change', e => {
@@ -590,54 +826,226 @@ function buildColorMenu() {
       if (!isNaN(val) && val >= 0.05) {
         cylHeight = Math.min(2.0, Math.max(0.05, val));
         rebuildCylGeo();
-        buildTopElectrodes();   // re-centre y-positions
+        buildTopElectrodes();
+        buildStack();   // refresh label position above electrodes
         showToast(`Top electrode height → ${cylHeight.toFixed(2)}`);
       }
     });
     heightCtrl.appendChild(heightInput);
 
-    const colorInput = document.createElement('input');
-    colorInput.type      = 'color';
-    colorInput.className = 'color-input';
-    colorInput.value     = topElecConfig.accent;
-    colorInput.title     = 'Change top electrode color';
-    colorInput.addEventListener('click',  e => e.stopPropagation());
-    colorInput.addEventListener('mousedown', e => e.stopPropagation());
-    colorInput.addEventListener('input', e => {
-      const hex = e.target.value;
-      updateLayerColor(LAYER_DEFS.length, hex);
-      dot.style.background = hex;
-    });
-
+    // Hide-all button
     const delBtn = document.createElement('button');
     delBtn.className   = 'delete-layer-btn';
-    delBtn.title       = 'Remove top electrodes';
+    delBtn.title       = 'Hide entire top electrode array';
     delBtn.textContent = '×';
     delBtn.addEventListener('click', e => {
       e.stopPropagation();
       topElecConfig.visible = false;
       topGroup.visible = false;
       buildStack();
-      closeAllMenus();
-      showToast('Top electrodes removed');
+      showToast('Top electrodes hidden');
     });
 
     row.appendChild(dot);
     row.appendChild(nameEl);
     row.appendChild(radiusCtrl);
     row.appendChild(heightCtrl);
-    row.appendChild(colorInput);
     row.appendChild(delBtn);
-    colorsMenu.appendChild(row);
+    controlsMenu.appendChild(row);
+
+    // Row 2: rows × cols inputs
+    const arrRow = document.createElement('div');
+    arrRow.className = 'color-row array-row';
+
+    const arrLbl = document.createElement('span');
+    arrLbl.className = 'color-name';
+    arrLbl.textContent = 'Array';
+
+    const colsCtrl = document.createElement('div');
+    colsCtrl.className = 'thickness-ctrl';
+    colsCtrl.innerHTML = `<label class="thick-label">cols:</label>`;
+    const colsInput = document.createElement('input');
+    colsInput.type      = 'number';
+    colsInput.className = 'thickness-input';
+    colsInput.value     = String(topElecConfig.cols);
+    colsInput.min = '1'; colsInput.max = '10'; colsInput.step = '1';
+    colsInput.addEventListener('click',     e => e.stopPropagation());
+    colsInput.addEventListener('mousedown', e => e.stopPropagation());
+    colsInput.addEventListener('change', e => {
+      const v = Math.max(1, Math.min(10, parseInt(e.target.value, 10) || 1));
+      topElecConfig.cols = v;
+      topElecConfig.removed.clear();   // structure changed → reset removals
+      // Device dimensions follow the array → recompute & rebuild everything
+      recomputeStackDimensions();
+      rebuildGlowPlane();
+      buildStack();          // rebuilds layers + reposition topGroup + refresh menus
+      buildTopElectrodes();  // rebuilds cylinders inside the resized stack
+      showToast(`Array cols → ${v} · device width ${STACK_W.toFixed(2)}`);
+    });
+    colsCtrl.appendChild(colsInput);
+
+    const rowsCtrl = document.createElement('div');
+    rowsCtrl.className = 'thickness-ctrl';
+    rowsCtrl.innerHTML = `<label class="thick-label">rows:</label>`;
+    const rowsInput = document.createElement('input');
+    rowsInput.type      = 'number';
+    rowsInput.className = 'thickness-input';
+    rowsInput.value     = String(topElecConfig.rows);
+    rowsInput.min = '1'; rowsInput.max = '10'; rowsInput.step = '1';
+    rowsInput.addEventListener('click',     e => e.stopPropagation());
+    rowsInput.addEventListener('mousedown', e => e.stopPropagation());
+    rowsInput.addEventListener('change', e => {
+      const v = Math.max(1, Math.min(10, parseInt(e.target.value, 10) || 1));
+      topElecConfig.rows = v;
+      topElecConfig.removed.clear();
+      // Device dimensions follow the array → recompute & rebuild everything
+      recomputeStackDimensions();
+      rebuildGlowPlane();
+      buildStack();
+      buildTopElectrodes();
+      showToast(`Array rows → ${v} · device depth ${STACK_D.toFixed(2)}`);
+    });
+    rowsCtrl.appendChild(rowsInput);
+
+    arrRow.appendChild(arrLbl);
+    arrRow.appendChild(colsCtrl);
+    arrRow.appendChild(rowsCtrl);
+    controlsMenu.appendChild(arrRow);
+
+    // Row 3: visual cell-grid showing each individual electrode
+    _buildElectrodeGridSelector(controlsMenu);
+
+  } else {
+    // Top electrode array is hidden — offer Restore button
+    const showRow = document.createElement('div');
+    showRow.className = 'color-row';
+    const showBtn = document.createElement('button');
+    showBtn.className   = 'add-layer-toggle-btn';
+    showBtn.textContent = '↺  Restore Top Electrodes';
+    showBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      topElecConfig.visible = true;
+      topElecConfig.removed.clear();
+      topGroup.visible = true;
+      buildTopElectrodes();
+      buildStack();
+      showToast('Top electrodes restored');
+    });
+    showRow.appendChild(showBtn);
+    controlsMenu.appendChild(showRow);
   }
 
   // ── Add Layer + Reset sections ────────────────────────────────
   const actionDiv = document.createElement('div');
   actionDiv.className = 'menu-divider';
-  colorsMenu.appendChild(actionDiv);
+  controlsMenu.appendChild(actionDiv);
 
-  _buildAddLayerSection(colorsMenu);
-  _buildResetSection(colorsMenu);
+  _buildAddLayerSection(controlsMenu);
+  _buildResetSection(controlsMenu);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   INDIVIDUAL ELECTRODE SELECTOR — premium top-down preview.
+   Each cell mirrors the real 3D electrode: click to toggle.
+   Removed cells show as dashed empty circles; the 3D scene
+   auto-redistributes the remaining electrodes.
+────────────────────────────────────────────────────────────── */
+function _buildElectrodeGridSelector(container) {
+  const ROWS = topElecConfig.rows;
+  const COLS = topElecConfig.cols;
+  const TOTAL = ROWS * COLS;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'electrode-grid-wrap';
+
+  // ── Header: title + live "visible / total" counter ────────────
+  const header = document.createElement('div');
+  header.className = 'electrode-grid-header';
+
+  const title = document.createElement('span');
+  title.className   = 'grid-title';
+  title.textContent = 'Top View · click to toggle';
+
+  const counter = document.createElement('span');
+  counter.className = 'grid-counter';
+  const updateCounter = () => {
+    counter.textContent = `${TOTAL - topElecConfig.removed.size} / ${TOTAL}`;
+  };
+  updateCounter();
+
+  header.appendChild(title);
+  header.appendChild(counter);
+  wrap.appendChild(header);
+
+  // ── Stage (top-down preview area) ─────────────────────────────
+  const stage = document.createElement('div');
+  stage.className = 'electrode-mini-stage';
+
+  const grid = document.createElement('div');
+  grid.className = 'electrode-grid';
+  grid.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const key  = `${r},${c}`;
+      const cell = document.createElement('button');
+      cell.className     = 'electrode-cell';
+      cell.title         = `Row ${r + 1}, Col ${c + 1}`;
+      cell.dataset.key   = key;
+      cell.style.setProperty('--cell', topElecConfig.accent);
+      if (topElecConfig.removed.has(key)) cell.classList.add('removed');
+
+      cell.addEventListener('click', e => {
+        e.stopPropagation();
+        if (topElecConfig.removed.has(key)) {
+          topElecConfig.removed.delete(key);
+          cell.classList.remove('removed');
+        } else {
+          topElecConfig.removed.add(key);
+          cell.classList.add('removed');
+        }
+        updateCounter();
+        buildTopElectrodes();   // 3D scene auto-redistributes immediately
+      });
+      grid.appendChild(cell);
+    }
+  }
+  stage.appendChild(grid);
+  wrap.appendChild(stage);
+
+  // ── Tools bar ────────────────────────────────────────────────
+  const tools = document.createElement('div');
+  tools.className = 'electrode-grid-tools';
+
+  const restoreBtn = document.createElement('button');
+  restoreBtn.className   = 'electrode-tool-btn';
+  restoreBtn.textContent = '↺  Restore All';
+  restoreBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    topElecConfig.removed.clear();
+    buildTopElectrodes();
+    buildControlsMenu();
+    showToast('All electrodes restored');
+  });
+
+  const removeAllBtn = document.createElement('button');
+  removeAllBtn.className   = 'electrode-tool-btn danger';
+  removeAllBtn.textContent = '✕  Remove All';
+  removeAllBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        topElecConfig.removed.add(`${r},${c}`);
+    buildTopElectrodes();
+    buildControlsMenu();
+    showToast('All electrodes removed');
+  });
+
+  tools.appendChild(restoreBtn);
+  tools.appendChild(removeAllBtn);
+  wrap.appendChild(tools);
+
+  container.appendChild(wrap);
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -756,22 +1164,35 @@ function resetToDefaults() {
   LAYER_DEFS.length = 0;
   LAYER_DEFS_DEFAULT.forEach(l => LAYER_DEFS.push({ ...l }));
 
-  // Restore top electrode config
-  topElecConfig.visible = TOP_ELEC_DEFAULT.visible;
-  topElecConfig.accent  = TOP_ELEC_DEFAULT.accent;
-  topElecConfig.color   = TOP_ELEC_DEFAULT.color;
+  // Restore top electrode config (full reset incl. rows/cols/removed)
+  topElecConfig.visible  = TOP_ELEC_DEFAULT.visible;
+  topElecConfig.accent   = TOP_ELEC_DEFAULT.accent;
+  topElecConfig.color    = TOP_ELEC_DEFAULT.color;
+  topElecConfig.cols     = TOP_ELEC_DEFAULT.cols;
+  topElecConfig.rows     = TOP_ELEC_DEFAULT.rows;
+  topElecConfig.name     = TOP_ELEC_DEFAULT.name;
+  topElecConfig.fullName = TOP_ELEC_DEFAULT.fullName;
+  topElecConfig.process  = TOP_ELEC_DEFAULT.process;
+  topElecConfig.removed.clear();
+
+  // Restore UI text
+  Object.assign(UI_TEXT, UI_TEXT_DEFAULT);
+  applyUITextToDOM();
 
   // Restore top electrode size
   cylRadius = 0.22;
-  cylHeight  = 0.30;
+  cylHeight = 0.30;
   rebuildCylGeo();
 
   // Restore top electrode 3D material
-  cylMat.color.setHex(topElecConfig.color);
-  _applyMetallicEmissive(cylMat, topElecConfig.color);
-  buildTopElectrodes();
+  _applyVisibleColor(cylMat, topElecConfig.color);
+
+  // Recompute device footprint for the default 5×4 array, rebuild glow
+  recomputeStackDimensions();
+  rebuildGlowPlane();
 
   buildStack();
+  buildTopElectrodes();
   showToast('All layers restored to defaults');
 }
 
@@ -786,9 +1207,7 @@ function updateLayerColor(idx, hexStr) {
 
   if (idx < LAYER_DEFS.length) {
     // ── Standard layer ──────────────────────────────────────────
-    const mat = layerMeshes[idx].material;
-    mat.color.setHex(threeHex);
-    _applyMetallicEmissive(mat, threeHex);
+    _applyVisibleColor(layerMeshes[idx].material, threeHex);
 
     LAYER_DEFS[idx].accent = hexStr;
     LAYER_DEFS[idx].color  = threeHex;
@@ -809,10 +1228,17 @@ function updateLayerColor(idx, hexStr) {
       if (sd) { sd.style.background = hexStr; sd.style.color = hexStr; }
     }
 
+    // Update colors / controls menu indicator dots for this layer
+    document.querySelectorAll(
+      `[data-edit="layer-name"][data-layer-index="${idx}"]`
+    ).forEach(el => {
+      const dot = el.parentElement && el.parentElement.querySelector('.color-indicator');
+      if (dot) dot.style.background = hexStr;
+    });
+
   } else {
     // ── Top electrodes ──────────────────────────────────────────
-    cylMat.color.setHex(threeHex);
-    _applyMetallicEmissive(cylMat, threeHex);
+    _applyVisibleColor(cylMat, threeHex);
 
     topElecConfig.accent = hexStr;
     topElecConfig.color  = threeHex;
@@ -827,6 +1253,11 @@ function updateLayerColor(idx, hexStr) {
         if (ldBox) { ldBox.style.color = hexStr; ldBox.style.borderColor = hexStr + '55'; }
       }
     }
+
+    // Refresh visual electrode-grid cells (uses --cell CSS variable now)
+    document.querySelectorAll('.electrode-cell').forEach(c => {
+      c.style.setProperty('--cell', hexStr);
+    });
   }
 }
 
@@ -1311,18 +1742,30 @@ shadowToggleBtn.addEventListener('click', () => {
 });
 
 /* ──────────────────────────────────────────────────────────────
-   COLORS DROPDOWN
+   COLORS / CONTROLS DROPDOWN BUTTONS
 ────────────────────────────────────────────────────────────── */
-const colorsBtn = document.getElementById('colors-btn');
+const colorsBtn   = document.getElementById('colors-btn');
+const controlsBtn = document.getElementById('controls-btn');
 
-// Prevent clicks inside the colors menu from closing it
-colorsMenu.addEventListener('click', e => e.stopPropagation());
+// Prevent clicks inside dropdown menus from closing them
+colorsMenu.addEventListener('click',     e => e.stopPropagation());
+controlsMenu.addEventListener('click',   e => e.stopPropagation());
+// Also stop double-clicks (used for inline rename) from bubbling
+colorsMenu.addEventListener('dblclick',   e => e.stopPropagation());
+controlsMenu.addEventListener('dblclick', e => e.stopPropagation());
 
 colorsBtn.addEventListener('click', e => {
   e.stopPropagation();
   const wasOpen = colorsMenu.classList.contains('open');
   closeAllMenus();
   if (!wasOpen) openMenu(colorsMenu, colorsBtn);
+});
+
+controlsBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const wasOpen = controlsMenu.classList.contains('open');
+  closeAllMenus();
+  if (!wasOpen) openMenu(controlsMenu, controlsBtn);
 });
 
 /* ──────────────────────────────────────────────────────────────
@@ -1408,6 +1851,183 @@ function showToast(msg) {
 }
 
 /* ──────────────────────────────────────────────────────────────
+   EDITABLE TEXT — generic dblclick-to-rename for any element
+   that has a `data-edit` attribute. Persisted into the right
+   data store based on the attribute value.
+────────────────────────────────────────────────────────────── */
+function _commitEdit(el, originalValue) {
+  const newVal = el.textContent.trim();
+  el.contentEditable = 'false';
+  el.classList.remove('editing');
+
+  // If user cleared the field, revert
+  const value = newVal.length === 0 ? originalValue : newVal;
+  el.textContent = value;
+
+  const kind = el.dataset.edit;
+  const layerIdx = parseInt(el.dataset.layerIndex, 10);
+
+  switch (kind) {
+    case 'title-main': UI_TEXT.titleMain = value; break;
+    case 'title-sub':  UI_TEXT.titleSub  = value; break;
+    case 'fab-header': UI_TEXT.fabHeader = value; break;
+    case 'fab-hint':   UI_TEXT.fabHint   = value; break;
+
+    case 'layer-name':
+      if (!isNaN(layerIdx) && LAYER_DEFS[layerIdx]) {
+        LAYER_DEFS[layerIdx].name = value;
+        // Refresh menus + 3D label so all references stay in sync
+        buildStack();
+      }
+      break;
+    case 'layer-full':
+      if (!isNaN(layerIdx) && LAYER_DEFS[layerIdx]) {
+        LAYER_DEFS[layerIdx].full = value;
+        buildFabPanel();
+      }
+      break;
+    case 'layer-process':
+      if (!isNaN(layerIdx) && LAYER_DEFS[layerIdx]) {
+        LAYER_DEFS[layerIdx].process = value;
+        buildFabPanel();
+      }
+      break;
+
+    case 'top-electrode-name':
+      topElecConfig.name = value;
+      buildStack();
+      break;
+    case 'top-full':
+      topElecConfig.fullName = value;
+      buildFabPanel();
+      break;
+    case 'top-process':
+      topElecConfig.process = value;
+      buildFabPanel();
+      break;
+  }
+  showToast('Updated');
+}
+
+function makeElementEditable(el) {
+  if (!el || el.contentEditable === 'true') return;
+  const original = el.textContent.trim();
+  el.contentEditable = 'true';
+  el.classList.add('editing');
+  el.focus();
+
+  // Select all text inside the element
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  let committed = false;
+  const finish = () => {
+    if (committed) return;
+    committed = true;
+    _commitEdit(el, original);
+  };
+  const cancel = () => {
+    if (committed) return;
+    committed = true;
+    el.contentEditable = 'false';
+    el.classList.remove('editing');
+    el.textContent = original;
+  };
+
+  el.addEventListener('blur', finish, { once: true });
+  el.addEventListener('keydown', function onKey(ev) {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      el.removeEventListener('keydown', onKey);
+      el.blur();
+    } else if (ev.key === 'Escape') {
+      ev.preventDefault();
+      el.removeEventListener('keydown', onKey);
+      cancel();
+      el.blur();
+    }
+  });
+}
+
+// Global delegated dblclick for any [data-edit] target
+document.addEventListener('dblclick', e => {
+  const t = e.target.closest('[data-edit]');
+  if (!t) return;
+  // Allow text-selection inside form inputs / number fields normally
+  if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') return;
+  e.preventDefault();
+  e.stopPropagation();
+  makeElementEditable(t);
+});
+
+/** Re-apply UI_TEXT values to the static DOM nodes (used by reset) */
+function applyUITextToDOM() {
+  document.querySelectorAll('[data-edit="title-main"]').forEach(el => el.textContent = UI_TEXT.titleMain);
+  document.querySelectorAll('[data-edit="title-sub"]').forEach(el  => el.textContent = UI_TEXT.titleSub);
+  document.querySelectorAll('[data-edit="fab-header"]').forEach(el => el.textContent = UI_TEXT.fabHeader);
+  document.querySelectorAll('[data-edit="fab-hint"]').forEach(el   => el.textContent = UI_TEXT.fabHint);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   EDIT MODE — click any electrode (or layer) in 3D to remove it
+────────────────────────────────────────────────────────────── */
+const editModeBtn = document.getElementById('edit-mode-toggle');
+let editMode = false;
+
+editModeBtn.addEventListener('click', () => {
+  editMode = !editMode;
+  editModeBtn.textContent = `Edit: ${editMode ? 'ON' : 'OFF'}`;
+  editModeBtn.classList.toggle('active', editMode);
+  document.body.classList.toggle('edit-mode', editMode);
+  showToast(editMode
+    ? 'Edit Mode ON — click an electrode or layer to remove it'
+    : 'Edit Mode OFF');
+});
+
+// 3D click-to-remove: only fires when Edit Mode is enabled
+const clickRay = new THREE.Raycaster();
+const clickNDC = new THREE.Vector2();
+
+renderer.domElement.addEventListener('click', e => {
+  if (!editMode) return;
+  // Ignore drag-clicks (they're handled by OrbitControls already)
+  const rect = canvas.getBoundingClientRect();
+  clickNDC.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  clickNDC.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+  clickRay.setFromCamera(clickNDC, camera);
+
+  // Test top electrodes first (smaller, more obvious target)
+  const topHits = clickRay.intersectObjects(topGroup.children, false);
+  if (topHits.length > 0) {
+    const ud = topHits[0].object.userData;
+    if (ud && ud.isTopElectrode) {
+      topElecConfig.removed.add(ud.key);
+      buildTopElectrodes();
+      buildControlsMenu();   // refresh visual cell-grid
+      showToast(`Electrode (${ud.row + 1},${ud.col + 1}) removed`);
+      return;
+    }
+  }
+
+  // Otherwise test layers
+  const lyrHits = clickRay.intersectObjects(layerMeshes, false);
+  if (lyrHits.length > 0) {
+    const idx = lyrHits[0].object.userData.layerIndex;
+    if (LAYER_DEFS.length <= 1) {
+      showToast('Cannot delete the last layer!');
+      return;
+    }
+    const name = LAYER_DEFS[idx].name;
+    LAYER_DEFS.splice(idx, 1);
+    buildStack();
+    showToast(`Layer "${name}" deleted`);
+  }
+});
+
+/* ──────────────────────────────────────────────────────────────
    RENDER LOOP
 ────────────────────────────────────────────────────────────── */
 const clock = new THREE.Clock();
@@ -1436,5 +2056,8 @@ window.addEventListener('resize', () => {
 /* ──────────────────────────────────────────────────────────────
    INITIALISE
 ────────────────────────────────────────────────────────────── */
+recomputeStackDimensions();
+rebuildGlowPlane();
 buildStack();
+buildTopElectrodes();
 animate();
